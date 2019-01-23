@@ -1,0 +1,4 @@
+comment = 'Functions and views to facilitate PostgreSQL object access inspection'
+default_version = '0.1'
+relocatable = false
+
