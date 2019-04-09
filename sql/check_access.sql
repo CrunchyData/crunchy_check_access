@@ -388,6 +388,6 @@ $$ language sql;
 
 grant execute on function @extschema@.my_privs_sys() to public;
 
-create or replace view @extschema@.my_privs_sys as select * from my_privs_sys();
+create or replace view @extschema@.my_privs_sys as select * from @extschema@.my_privs_sys();
 grant select on @extschema@.my_privs_sys to public;
 
