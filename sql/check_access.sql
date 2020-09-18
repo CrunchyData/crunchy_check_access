@@ -1,8 +1,8 @@
 /*
- * 
+ *
  * Copyright 2015-2019 Crunchy Data Solutions, Inc.
  * Copyright 2009-2015 Joe Conway <mail@joeconway.com>
- * 
+ *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose, without fee, and without a written agreement
  * is hereby granted, provided that the above copyright notice and this
@@ -171,7 +171,7 @@ as $$
 
         -- check function privs
         objtype := 'function';
-        for objid, objname in select p.oid, p.proname || '(' || proargtypes::text || ')' from pg_catalog.pg_proc p where p.pronamespace = schemaoid order by 2,1 loop
+        for objid, objname in select p.oid, p.proname || '(' || pg_catalog.pg_get_function_arguments(p.oid) || ')' from pg_catalog.pg_proc p where p.pronamespace = schemaoid order by 2,1 loop
           foreach grantopt in array with_grant loop
             foreach priv in array func_privs loop
               if (has_function_privilege(luser, objid, priv || grantopt)) then
