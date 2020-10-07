@@ -143,7 +143,7 @@ as $$
           if (has_language_privilege(luser, objname, priv || grantopt)) then
             -- still might not be true ...
             -- if a superuser, or language is trusted, we really do have access
-            if ((select rolsuper from pg_catalog.pg_authid where rolname = luser) or
+            if ((select rolsuper from pg_catalog.pg_roles where rolname = luser) or
                 (select l.lanpltrusted from pg_catalog.pg_language l where l.oid = objid)) then
               privname := priv || grantopt;
               return next;
@@ -264,7 +264,7 @@ as $$
 
     -- recurse into any granted roles
     brole_path := role_path;
-    for grpname, inh in select a.rolname as group, '(' || u.rolinherit || ')' from pg_catalog.pg_authid a join pg_catalog.pg_auth_members m on a.oid = m.roleid join pg_authid u on m.member = u.oid where u.rolname = luser loop
+    for grpname, inh in select a.rolname as group, '(' || u.rolinherit || ')' from pg_catalog.pg_roles a join pg_catalog.pg_auth_members m on a.oid = m.roleid join pg_roles u on m.member = u.oid where u.rolname = luser loop
       role_path := brole_path || inh || '.' || grpname;
       for rec in select * from check_access(grpname, incl_sys, role_path) loop
         as_role := rec.as_role;
@@ -322,7 +322,7 @@ as $$
     rec              record;
     rname            text;
   begin
-    for rname in select a.rolname as group from pg_catalog.pg_authid a order by 1 loop
+    for rname in select a.rolname as group from pg_catalog.pg_roles a order by 1 loop
       for role_path, base_role, as_role, objtype, objid, schemaname, objname, privname in select * from check_access(rname, incl_sys) loop
         return next;
       end loop;
