@@ -19,3 +19,5 @@ By default, execute has been revoked from PUBLIC on the installed functions exce
 Note that the privileges are discovered by recursing through all roles accessable via a ```GRANT```, including non-inherited ones (need to specifically use ```SET ROLE``` to escalate and gain said privilege). The source path to a given privilege shown in the output is available in the ```role_path``` column. Each ancestor in the ```role_path``` is tagged with either ```(true)``` or ```(false)``` to indicate if privileges are inherited by that role.
 
 ```base_role``` was the entry point (initially logged in user), while ```as_role``` shows the role with the actual privilege.
+
+The ```all_access``` and ```check_access``` report grants that actually authorize actions against the referenced object.  For example, a role may be granted SELECT privileges but will not be reported by the access functions unless it also has usage privilege on the schema.  To allow for reporting of all grants the ```all_grants``` and ```check_grants``` function was added.  These functions will report all grants and are useful for entitlement and audit reporting.
