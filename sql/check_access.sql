@@ -45,6 +45,8 @@ as $$
     priv             text;
     grantopt         text;
     grpname          text;
+    inh              text;
+    brole_path       text;
     rec              record;
 
     db_privs         text[] := ARRAY['CREATE', 'CONNECT', 'TEMPORARY', 'TEMP'];
@@ -169,7 +171,7 @@ as $$
 
         -- check function privs
         objtype := 'function';
-        for objid, objname in select p.oid, p.proname from pg_catalog.pg_proc p where p.pronamespace = schemaoid order by 2,1 loop
+        for objid, objname in select p.oid, p.proname || '(' || proargtypes::text || ')' from pg_catalog.pg_proc p where p.pronamespace = schemaoid order by 2,1 loop
           foreach grantopt in array with_grant loop
             foreach priv in array func_privs loop
               if (has_function_privilege(luser, objid, priv || grantopt)) then
@@ -220,7 +222,7 @@ as $$
             foreach priv in array table_privs loop
               if (has_table_privilege(luser, objid, priv || grantopt)) then
                 objtype := 'view';
-                privname := priv;
+                privname := priv || grantopt;
                 return next;
               else
                 if priv = ANY (column_privs) then
@@ -260,11 +262,13 @@ as $$
       end if;
     end loop;
 
-    -- recurse into any noninherited but granted roles
-    for grpname in select a.rolname as group from pg_catalog.pg_authid a join pg_catalog.pg_auth_members m on a.oid = m.roleid join pg_authid u on m.member = u.oid where u.rolinherit = 'f' and u.rolname = luser loop
-      role_path := role_path || '.' || grpname;
+    -- recurse into any granted roles
+    brole_path := role_path;
+    for grpname, inh in select a.rolname as group, '(' || u.rolinherit || ')' from pg_catalog.pg_authid a join pg_catalog.pg_auth_members m on a.oid = m.roleid join pg_authid u on m.member = u.oid where u.rolname = luser loop
+      role_path := brole_path || inh || '.' || grpname;
       for rec in select * from @extschema@.check_access(grpname, incl_sys, role_path) loop
         as_role := rec.as_role;
+        role_path := rec.role_path;
         objtype := rec.objtype;
         objid := rec.objid;
         schemaname := rec.schemaname;
