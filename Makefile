@@ -10,8 +10,8 @@ PG94 = $(shell $(PG_CONFIG) --version | egrep " 8\.| 9\.0| 9\.1| 9\.2| 9\.3" > /
 ifeq ($(PG94),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql
 
-sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).sql
-	    cp $< $@
+sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).sql sql/check_grants.sql
+	cat $^ > $@
 
 DATA = $(wildcard updates/*--*.sql) sql/$(EXTENSION)--$(EXTVERSION).sql
 EXTRA_CLEAN = sql/$(EXTENSION)--$(EXTVERSION).sql
