@@ -1,4 +1,4 @@
-create or replace function @extschema@.check_grants
+create function @extschema@.check_grants
 (
   in luser text,
   in incl_sys bool,
@@ -160,7 +160,7 @@ as $$
                 objtype := 'table.column';
                 if (has_any_column_privilege(luser, objid, priv)) then
                   if (incl_sys) then
-                    minatt = ''; -- arbitrary, but ought to work for the forseeable future
+                    minatt = ''; -- arbitrary, but ought to work for the foreseeable future
                   else
                     minatt = ' and a.attnum > 0'; -- show only user columns
                   end if;
@@ -247,7 +247,7 @@ $$ language plpgsql;
 
 revoke execute on function @extschema@.check_grants(text, bool, text) from public;
 
-create or replace function @extschema@.check_grants
+create function @extschema@.check_grants
 (
   in luser text,
   in incl_sys bool,
@@ -268,7 +268,7 @@ $$ language sql;
 
 revoke execute on function @extschema@.check_grants(text, bool) from public;
 
-create or replace function @extschema@.all_grants
+create function @extschema@.all_grants
 (
   in incl_sys bool,
   out role_path text,
@@ -298,7 +298,7 @@ $$ language plpgsql;
 
 revoke execute on function @extschema@.all_grants(bool) from public;
 
-create or replace function @extschema@.all_grants
+create function @extschema@.all_grants
 (
   out role_path text,
   out base_role text,
