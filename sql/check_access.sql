@@ -1,28 +1,4 @@
-/*
- *
- * Copyright 2015-2019 Crunchy Data Solutions, Inc.
- * Copyright 2009-2015 Joe Conway <mail@joeconway.com>
- *
- * Permission to use, copy, modify, and distribute this software and its
- * documentation for any purpose, without fee, and without a written agreement
- * is hereby granted, provided that the above copyright notice and this
- * paragraph and the following two paragraphs appear in all copies.
- *
- * IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
- * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
- * LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
- * DOCUMENTATION, EVEN IF THE AUTHOR OR DISTRIBUTORS HAVE BEEN ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- * THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
- * ON AN "AS IS" BASIS, AND THE AUTHOR AND DISTRIBUTORS HAS NO OBLIGATIONS TO
- * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
- *
- */
-
-create or replace function @extschema@.check_access
+create function @extschema@.check_access
 (
   in luser text,
   in incl_sys bool,
@@ -196,7 +172,7 @@ as $$
                   objtype := 'table.column';
                   if (has_any_column_privilege(luser, objid, priv || grantopt)) then
                     if (incl_sys) then
-                      minatt = ''; -- arbitrary, but ought to work for the forseeable future
+                      minatt = ''; -- arbitrary, but ought to work for the foreseeable future
                     else
                       minatt = ' and a.attnum > 0'; -- show only user columns
                     end if;
@@ -284,7 +260,7 @@ $$ language plpgsql;
 
 revoke execute on function @extschema@.check_access(text, bool, text) from public;
 
-create or replace function @extschema@.check_access
+create function @extschema@.check_access
 (
   in luser text,
   in incl_sys bool,
@@ -304,7 +280,7 @@ $$ language sql;
 
 revoke execute on function @extschema@.check_access(text, bool) from public;
 
-create or replace function @extschema@.all_access
+create function @extschema@.all_access
 (
   in incl_sys bool,
   out role_path text,
@@ -333,7 +309,7 @@ $$ language plpgsql;
 
 revoke execute on function @extschema@.all_access(bool) from public;
 
-create or replace function @extschema@.all_access
+create function @extschema@.all_access
 (
   out role_path text,
   out base_role text,
@@ -351,7 +327,7 @@ $$ language sql;
 
 revoke execute on function @extschema@.all_access() from public;
 
-create or replace function @extschema@.my_privs
+create function @extschema@.my_privs
 (
   out role_path text,
   out base_role text,
@@ -370,10 +346,10 @@ $$ language sql;
 
 grant execute on function @extschema@.my_privs() to public;
 
-create or replace view @extschema@.my_privs as select * from @extschema@.my_privs();
+create view @extschema@.my_privs as select * from @extschema@.my_privs();
 grant select on @extschema@.my_privs to public;
 
-create or replace function @extschema@.my_privs_sys
+create function @extschema@.my_privs_sys
 (
   out role_path text,
   out base_role text,
@@ -392,6 +368,5 @@ $$ language sql;
 
 grant execute on function @extschema@.my_privs_sys() to public;
 
-create or replace view @extschema@.my_privs_sys as select * from @extschema@.my_privs_sys();
+create view @extschema@.my_privs_sys as select * from @extschema@.my_privs_sys();
 grant select on @extschema@.my_privs_sys to public;
-
