@@ -1,4 +1,4 @@
-create or replace function check_grants
+create or replace function @extschema@.check_grants
 (
   in luser text,
   in incl_sys bool,
@@ -228,7 +228,7 @@ as $$
     brole_path := role_path;
     for grpname, inh in select a.rolname as group, '(' || u.rolinherit || ')' from pg_catalog.pg_authid a join pg_catalog.pg_auth_members m on a.oid = m.roleid join pg_authid u on m.member = u.oid where u.rolname = luser loop
       role_path := brole_path || inh || '.' || grpname;
-      for rec in select * from check_grants(grpname, incl_sys, role_path) loop
+      for rec in select * from @extschema@.check_grants(grpname, incl_sys, role_path) loop
         as_role := rec.as_role;
         role_path := rec.role_path;
         objtype := rec.objtype;
@@ -245,9 +245,9 @@ as $$
   end;
 $$ language plpgsql;
 
-revoke execute on function check_grants(text, bool, text) from public;
+revoke execute on function @extschema@.check_grants(text, bool, text) from public;
 
-create or replace function check_grants
+create or replace function @extschema@.check_grants
 (
   in luser text,
   in incl_sys bool,
@@ -263,12 +263,12 @@ create or replace function check_grants
 )
 returns setof record
 as $$
-  select * from check_grants($1, $2, NULL);
+  select * from @extschema@.check_grants($1, $2, NULL);
 $$ language sql;
 
-revoke execute on function check_grants(text, bool) from public;
+revoke execute on function @extschema@.check_grants(text, bool) from public;
 
-create or replace function all_grants
+create or replace function @extschema@.all_grants
 (
   in incl_sys bool,
   out role_path text,
@@ -288,7 +288,7 @@ as $$
     rname            text;
   begin
     for rname in select a.rolname as group from pg_catalog.pg_authid a order by 1 loop
-      for role_path, base_role, as_role, objtype, objid, schemaname, objname, privname, grantable in select * from check_grants(rname, incl_sys) loop
+      for role_path, base_role, as_role, objtype, objid, schemaname, objname, privname, grantable in select * from @extschema@.check_grants(rname, incl_sys) loop
         return next;
       end loop;
     end loop;
@@ -296,9 +296,9 @@ as $$
   end;
 $$ language plpgsql;
 
-revoke execute on function all_grants(bool) from public;
+revoke execute on function @extschema@.all_grants(bool) from public;
 
-create or replace function all_grants
+create or replace function @extschema@.all_grants
 (
   out role_path text,
   out base_role text,
@@ -312,7 +312,7 @@ create or replace function all_grants
 )
 returns setof record
 as $$
-  select * from all_grants(false)
+  select * from @extschema@.all_grants(false)
 $$ language sql;
 
-revoke execute on function all_grants() from public;
+revoke execute on function @extschema@.all_grants() from public;
