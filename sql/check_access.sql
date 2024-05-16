@@ -1,8 +1,8 @@
 /*
- * 
+ *
  * Copyright 2015-2019 Crunchy Data Solutions, Inc.
  * Copyright 2009-2015 Joe Conway <mail@joeconway.com>
- * 
+ *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose, without fee, and without a written agreement
  * is hereby granted, provided that the above copyright notice and this
@@ -22,7 +22,7 @@
  *
  */
 
-create or replace function check_access
+create or replace function @extschema@.check_access
 (
   in luser text,
   in incl_sys bool,
@@ -143,7 +143,7 @@ as $$
           if (has_language_privilege(luser, objname, priv || grantopt)) then
             -- still might not be true ...
             -- if a superuser, or language is trusted, we really do have access
-            if ((select rolsuper from pg_catalog.pg_authid where rolname = luser) or
+            if ((select rolsuper from pg_catalog.pg_roles where rolname = luser) or
                 (select l.lanpltrusted from pg_catalog.pg_language l where l.oid = objid)) then
               privname := priv || grantopt;
               return next;
@@ -171,7 +171,7 @@ as $$
 
         -- check function privs
         objtype := 'function';
-        for objid, objname in select p.oid, p.proname || '(' || proargtypes::text || ')' from pg_catalog.pg_proc p where p.pronamespace = schemaoid order by 2,1 loop
+        for objid, objname in select p.oid, p.proname || '(' || pg_catalog.pg_get_function_arguments(p.oid) || ')' from pg_catalog.pg_proc p where p.pronamespace = schemaoid order by 2,1 loop
           foreach grantopt in array with_grant loop
             foreach priv in array func_privs loop
               if (has_function_privilege(luser, objid, priv || grantopt)) then
@@ -264,9 +264,9 @@ as $$
 
     -- recurse into any granted roles
     brole_path := role_path;
-    for grpname, inh in select a.rolname as group, '(' || u.rolinherit || ')' from pg_catalog.pg_authid a join pg_catalog.pg_auth_members m on a.oid = m.roleid join pg_authid u on m.member = u.oid where u.rolname = luser loop
+    for grpname, inh in select a.rolname as group, '(' || u.rolinherit || ')' from pg_catalog.pg_roles a join pg_catalog.pg_auth_members m on a.oid = m.roleid join pg_roles u on m.member = u.oid where u.rolname = luser loop
       role_path := brole_path || inh || '.' || grpname;
-      for rec in select * from check_access(grpname, incl_sys, role_path) loop
+      for rec in select * from @extschema@.check_access(grpname, incl_sys, role_path) loop
         as_role := rec.as_role;
         role_path := rec.role_path;
         objtype := rec.objtype;
@@ -282,9 +282,9 @@ as $$
   end;
 $$ language plpgsql;
 
-revoke execute on function check_access(text, bool, text) from public;
+revoke execute on function @extschema@.check_access(text, bool, text) from public;
 
-create or replace function check_access
+create or replace function @extschema@.check_access
 (
   in luser text,
   in incl_sys bool,
@@ -299,12 +299,12 @@ create or replace function check_access
 )
 returns setof record
 as $$
-  select * from check_access($1, $2, NULL);
+  select * from @extschema@.check_access($1, $2, NULL);
 $$ language sql;
 
-revoke execute on function check_access(text, bool) from public;
+revoke execute on function @extschema@.check_access(text, bool) from public;
 
-create or replace function all_access
+create or replace function @extschema@.all_access
 (
   in incl_sys bool,
   out role_path text,
@@ -322,8 +322,8 @@ as $$
     rec              record;
     rname            text;
   begin
-    for rname in select a.rolname as group from pg_catalog.pg_authid a order by 1 loop
-      for role_path, base_role, as_role, objtype, objid, schemaname, objname, privname in select * from check_access(rname, incl_sys) loop
+    for rname in select a.rolname as group from pg_catalog.pg_roles a order by 1 loop
+      for role_path, base_role, as_role, objtype, objid, schemaname, objname, privname in select * from @extschema@.check_access(rname, incl_sys) loop
         return next;
       end loop;
     end loop;
@@ -331,9 +331,9 @@ as $$
   end;
 $$ language plpgsql;
 
-revoke execute on function all_access(bool) from public;
+revoke execute on function @extschema@.all_access(bool) from public;
 
-create or replace function all_access
+create or replace function @extschema@.all_access
 (
   out role_path text,
   out base_role text,
@@ -346,34 +346,12 @@ create or replace function all_access
 )
 returns setof record
 as $$
-  select * from all_access(false)
+  select * from @extschema@.all_access(false)
 $$ language sql;
 
-revoke execute on function all_access() from public;
+revoke execute on function @extschema@.all_access() from public;
 
-create or replace function my_privs
-(
-  out role_path text,
-  out base_role text,
-  out as_role text,
-  out objtype text,
-  out objid oid,
-  out schemaname text,
-  out objname text,
-  out privname text
-)
-returns setof record
-SECURITY DEFINER
-as $$
-  select * from all_access(false) where base_role = SESSION_USER
-$$ language sql;
-
-grant execute on function my_privs() to public;
-
-create or replace view my_privs as select * from my_privs();
-grant select on my_privs to public;
-
-create or replace function my_privs_sys
+create or replace function @extschema@.my_privs
 (
   out role_path text,
   out base_role text,
@@ -387,11 +365,33 @@ create or replace function my_privs_sys
 returns setof record
 SECURITY DEFINER
 as $$
-  select * from all_access(true) where base_role = SESSION_USER
+  select * from @extschema@.all_access(false) where base_role = SESSION_USER
 $$ language sql;
 
-grant execute on function my_privs_sys() to public;
+grant execute on function @extschema@.my_privs() to public;
 
-create or replace view my_privs_sys as select * from my_privs_sys();
-grant select on my_privs_sys to public;
+create or replace view @extschema@.my_privs as select * from @extschema@.my_privs();
+grant select on @extschema@.my_privs to public;
+
+create or replace function @extschema@.my_privs_sys
+(
+  out role_path text,
+  out base_role text,
+  out as_role text,
+  out objtype text,
+  out objid oid,
+  out schemaname text,
+  out objname text,
+  out privname text
+)
+returns setof record
+SECURITY DEFINER
+as $$
+  select * from @extschema@.all_access(true) where base_role = SESSION_USER
+$$ language sql;
+
+grant execute on function @extschema@.my_privs_sys() to public;
+
+create or replace view @extschema@.my_privs_sys as select * from @extschema@.my_privs_sys();
+grant select on @extschema@.my_privs_sys to public;
 
